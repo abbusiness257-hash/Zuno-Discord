@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yourusername — guns.lol</title>
+  <meta name="description" content="For Nothing But Amusement" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+          },
+          colors: {
+            cyber: {
+              purple: '#a855f7',
+              blue: '#6366f1',
+              glow: 'rgba(168, 85, 247, 0.4)',
+            },
+          },
+          animation: {
+            'pulse-glow': 'pulseGlow 2.5s ease-in-out infinite',
+            'fade-in': 'fadeIn 1s ease-out forwards',
+            'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%, 100%': { opacity: '0.6', textShadow: '0 0 20px rgba(255,255,255,0.3)' },
+              '50%': { opacity: '1', textShadow: '0 0 40px rgba(255,255,255,0.6), 0 0 80px rgba(168,85,247,0.3)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(24px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-8px)' },
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: #050505;
+      overflow-x: hidden;
+    }
+
+    /* Background video container */
+    #bg-video {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    #bg-video video,
+    #bg-video .bg-placeholder {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #bg-video .bg-placeholder {
+      background: radial-gradient(ellipse at 50% 0%, #0f0a1a 0%, #050505 50%, #000 100%);
+    }
+
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.55);
+      pointer-events: none;
+    }
+
+    /* Scanline effect */
+    .scanlines::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+    }
+
+    /* Grain / noise overlay */
+    .grain::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* Text glow utilities */
+    .text-glow {
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.15), 0 0 40px rgba(255, 255, 255, 0.05);
+    }
+
+    .text-glow-strong {
+      text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.4),
+        0 0 30px rgba(255, 255, 255, 0.2),
+        0 0 60px rgba(168, 85, 247, 0.15);
+    }
+
+    .text-glow-purple {
+      text-shadow: 0 0 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Enter overlay */
+    #enter-overlay {
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    #enter-overlay.hidden-overlay {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #enter-text {
+      transition: transform 0.3s ease, text-shadow 0.3s ease, letter-spacing 0.3s ease;
+    }
+
+    #enter-text:hover {
+      transform: scale(1.03);
+      letter-spacing: 0.08em;
+      text-shadow:
+        0 0 20px rgba(255, 255, 255, 0.6),
+        0 0 60px rgba(168, 85, 247, 0.4);
+    }
+
+    /* Profile content hidden until enter — legacy removed */
+    #profile-top,
+    #bottom-section {
+      pointer-events: none;
+    }
+
+    #profile-top.visible,
+    #bottom-section.visible {
+      pointer-events: auto;
+    }
+
+    /* Avatar ring glow */
+    .avatar-ring {
+      box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.08),
+        0 0 30px rgba(168, 85, 247, 0.25),
+        0 0 60px rgba(99, 102, 241, 0.1);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .avatar-ring:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.15),
+        0 0 40px rgba(168, 85, 247, 0.45),
+        0 0 80px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Copy button */
+    .copy-btn {
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: rgba(168, 85, 247, 0.5);
+      transform: scale(1.05);
+    }
+
+    .copy-btn.copied {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.5);
+      color: #86efac;
+    }
+
+    /* Link hover */
+    .cyber-link {
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .cyber-link:hover {
+      color: #c084fc;
+      text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+    }
+
+    /* Discord status card — guns.lol style, low opacity */
+    .discord-card {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+
+    .discord-card:hover {
+      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .profile-divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+      margin: 0.75rem auto 1rem;
+    }
+
+    /* Bottom section */
+    #bottom-section {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+    }
+
+    #bottom-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #profile-top {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s;
+    }
+
+    #profile-top.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(168, 85, 247, 0.3);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(168, 85, 247, 0.5);
+    }
+
+    /* Loading screen */
+    #loader {
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Volume control — smooth expand */
+    #volume-control {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 0.4s ease,
+                  background 0.4s ease,
+                  box-shadow 0.4s ease,
+                  padding 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    #volume-control:hover,
+    #volume-control.expanded {
+      border-color: rgba(168, 85, 247, 0.2);
+      background: rgba(0, 0, 0, 0.55);
+      box-shadow: 0 4px 32px rgba(168, 85, 247, 0.12);
+      padding-right: 0.75rem;
+    }
+
+    #volume-control.hidden-until-enter {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+    }
+
+    #volume-control.visible-control {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .vol-controls-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      max-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.35s ease,
+                  gap 0.45s ease,
+                  margin-left 0.45s ease;
+      margin-left: 0;
+    }
+
+    #volume-control:hover .vol-controls-wrap,
+    #volume-control.expanded .vol-controls-wrap {
+      max-width: 160px;
+      opacity: 1;
+      gap: 0.35rem;
+      margin-left: 0.35rem;
+    }
+
+    .vol-btn {
+      transition: color 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+    }
+
+    .vol-btn:hover {
+      color: #fff;
+      background: rgba(168, 85, 247, 0.18);
+      transform: scale(1.1);
+    }
+
+    .vol-btn:active {
+      transform: scale(0.95);
+    }
+
+    #volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 80px;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(to right, #a855f7 var(--vol-percent, 85%), rgba(255,255,255,0.12) var(--vol-percent, 85%));
+      outline: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    #volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.7);
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    }
+
+    #volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.9);
+    }
+
+    #volume-slider::-moz-range-thumb {
+      width: 11px;
+      height: 11px;
+      border: none;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.7);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    /* Rain canvas */
+    #rain-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    /* Welcome message — bottom center, above status bar */
+    #welcome-msg {
+      position: fixed;
+      bottom: 8rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(24px);
+      z-index: 55;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (min-width: 640px) {
+      #welcome-msg {
+        bottom: 9.5rem;
+      }
+    }
+
+    #welcome-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #welcome-msg.hide {
+      opacity: 0;
+      transform: translateX(-50%) translateY(10px);
+    }
+
+    /* Profile views hover tooltip */
+    #view-counter {
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    #view-counter:hover {
+      transform: scale(1.05);
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    #view-tooltip {
+      opacity: 0;
+      transform: translateX(-50%) translateY(4px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    #view-counter:hover #view-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Recent activity — bottom right */
+    #recent-activity {
+      opacity: 0;
+      transform: translateX(12px);
+      transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
+      pointer-events: none;
+    }
+
+    #recent-activity.visible {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .activity-card {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+    }
+
+    .activity-item {
+      transition: background 0.2s ease;
+    }
+
+    .activity-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    @media (max-width: 640px) {
+      #recent-activity {
+        right: 0.75rem;
+        left: 0.75rem;
+        bottom: 7.5rem;
+        max-width: none;
+      }
+
+      #welcome-msg {
+        bottom: 5.5rem;
+      }
+    }
+
+    /* Discord status dot */
+    .status-dot {
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .status-online { color: #23a559; background: #23a559; }
+    .status-idle { color: #f0b232; background: #f0b232; }
+    .status-dnd { color: #f23f43; background: #f23f43; }
+    .status-offline { color: #80848e; background: #80848e; }
+
+    @media (max-width: 640px) {
+      #bottom-section {
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white font-sans antialiased scanlines grain">
+
+  <!-- Loading screen -->
+  <div id="loader" class="fixed inset-0 z-[100] flex items-center justify-center bg-black">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-8 h-8 border-2 border-white/20 border-t-purple-500 rounded-full animate-spin"></div>
+      <span class="font-mono text-xs text-white/40 tracking-widest uppercase">Loading</span>
+    </div>
+  </div>
+
+  <!-- Background video -->
+  <div id="bg-video">
+    <video id="bg-video-el" autoplay muted loop playsinline preload="auto">
+      <source src="assets/bg-video.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+
+  <!-- Rain effect -->
+  <canvas id="rain-canvas"></canvas>
+
+  <!-- Volume control (top-left, smooth expand) -->
+  <div id="volume-control" class="fixed top-4 left-4 z-[60] hidden-until-enter flex items-center px-2.5 py-2 rounded-full">
+    <button id="volume-mute" class="vol-btn p-1.5 rounded-full text-white/60 shrink-0" title="Mute / Unmute" aria-label="Toggle mute">
+      <svg id="icon-volume-on" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-[18px] sm:h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+      </svg>
+      <svg id="icon-volume-off" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-[18px] sm:h-[18px] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16 8l4 4m0-4l-4 4" />
+      </svg>
+    </button>
+    <div class="vol-controls-wrap">
+      <button id="volume-down" class="vol-btn p-1 rounded-full text-white/45 font-mono text-xs w-6 h-6 flex items-center justify-center" title="Volume down" aria-label="Volume down">−</button>
+      <input id="volume-slider" type="range" min="0" max="100" value="85" aria-label="Volume slider" />
+      <button id="volume-up" class="vol-btn p-1 rounded-full text-white/45 font-mono text-xs w-6 h-6 flex items-center justify-center" title="Volume up" aria-label="Volume up">+</button>
+    </div>
+  </div>
+
+  <!-- Enter overlay -->
+  <div id="enter-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center cursor-pointer select-none">
+    <p
+      id="enter-text"
+      class="font-mono text-lg sm:text-xl md:text-2xl text-white/70 tracking-[0.2em] uppercase animate-pulse-glow cursor-pointer"
+    >
+      Click to enter...
+    </p>
+    <p class="mt-4 text-xs text-white/20 font-mono tracking-widest">[ press anywhere ]</p>
+  </div>
+
+  <!-- Top header (centered) -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 py-4 sm:py-5 pointer-events-none hidden">
+    <p class="text-center text-[10px] sm:text-xs font-mono text-white/30 tracking-wide pointer-events-auto">
+      <span class="hover:text-white/50 transition-colors">@yourusername</span>
+      <span class="mx-2 text-white/15">|</span>
+      <a href="#" class="cyber-link text-white/30 hover:text-purple-400">yoursite.lol</a>
+    </p>
+  </header>
+
+  <!-- Main — top center profile -->
+  <main class="relative z-10 min-h-screen flex flex-col items-center justify-start px-4 sm:px-6 pt-20 sm:pt-24 pb-40">
+
+    <div id="profile-top" class="w-full max-w-md mx-auto text-center flex flex-col items-center">
+
+      <!-- Avatar -->
+      <div class="avatar-ring w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden mx-auto mb-4 sm:mb-5">
+        <img
+          id="profile-avatar"
+          src="https://cdn.discordapp.com/embed/avatars/0.png"
+          alt="Profile avatar"
+          class="w-full h-full object-cover"
+          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%231a1a2e%22 width=%22100%22 height=%22100%22/%3E%3Ccircle cx=%2250%22 cy=%2238%22 r=%2218%22 fill=%22%23333%22/%3E%3Cellipse cx=%2250%22 cy=%2285%22 rx=%2230%22 ry=%2222%22 fill=%22%23333%22/%3E%3C/svg%3E'"
+        />
+      </div>
+
+      <!-- Username (not display name) -->
+      <h1 id="profile-username" class="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight text-glow-strong">
+        yourusername
+      </h1>
+
+      <div class="profile-divider"></div>
+
+      <!-- Bio -->
+      <p id="profile-bio" class="text-sm sm:text-base text-white/70 font-light tracking-wide">
+        For Nothing But Amusement
+      </p>
+
+    </div>
+  </main>
+
+  <!-- Bottom center: views + Discord status -->
+  <div id="bottom-section" class="fixed bottom-6 sm:bottom-10 left-0 right-0 z-40 flex flex-col items-center gap-3 sm:gap-4 px-4">
+
+    <!-- Profile Views (above status bar, hover tooltip) -->
+    <div id="view-counter" class="relative group cursor-default text-white/35 select-none">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1 1 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span id="view-count" class="font-mono text-sm tabular-nums">5314</span>
+      </div>
+      <span id="view-tooltip" class="absolute -top-7 left-1/2 whitespace-nowrap text-[10px] sm:text-xs font-mono text-white/50 tracking-widest uppercase pointer-events-none">
+        Profile View
+      </span>
+    </div>
+
+    <!-- Discord Status bar -->
+    <div class="discord-card w-full max-w-xs sm:max-w-sm rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5">
+      <div class="flex items-center gap-3 sm:gap-4">
+        <!-- Small avatar with status dot -->
+        <div class="relative shrink-0">
+          <img
+            id="discord-card-avatar"
+            src="https://cdn.discordapp.com/embed/avatars/0.png"
+            alt="Discord avatar"
+            class="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover"
+          />
+          <span id="discord-card-dot" class="status-dot status-offline absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-black/60"></span>
+        </div>
+        <!-- Status text -->
+        <div class="min-w-0 text-left">
+          <p id="discord-status-text" class="text-sm sm:text-base font-semibold text-white/90 truncate">Loading...</p>
+          <p id="discord-status-sub" class="text-xs sm:text-sm text-white/40 truncate mt-0.5">Connecting...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Recent Activity — bottom right -->
+  <div id="recent-activity" class="fixed bottom-6 sm:bottom-10 right-4 sm:right-6 z-40 w-52 sm:w-60">
+    <div class="activity-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4">
+      <p class="text-[10px] sm:text-xs font-mono text-white/30 uppercase tracking-[0.15em] mb-2.5">Recent Activity</p>
+      <ul id="activity-list" class="space-y-1.5">
+        <li class="activity-item rounded-lg px-2 py-1.5 text-xs sm:text-sm text-white/45 font-light">
+          Waiting for activity...
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Welcome message — bottom center -->
+  <div id="welcome-msg" class="px-5 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/8">
+    <span class="font-mono text-xs sm:text-sm text-white/70 tracking-[0.25em] uppercase">Welcome</span>
+  </div>
+
+  <!-- Toast notification (removed — using welcome-msg instead) -->
+  <div id="toast" class="hidden" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ── Config (edit these) ──
+      const CONFIG = {
+        username: 'yourusername',
+        site: 'yoursite.lol',
+        bio: 'For Nothing But Amusement',
+        profileViews: 5314,
+        discordUserId: '1386572653590216836',
+        defaultVolume: 0.85,
+      };
+
+      const STATUS_LABELS = {
+        online: 'Online',
+        idle: 'Idle',
+        dnd: 'Do Not Disturb',
+        offline: 'last seen recently',
+      };
+
+      // ── DOM refs ──
+      const loader = document.getElementById('loader');
+      const enterOverlay = document.getElementById('enter-overlay');
+      const enterText = document.getElementById('enter-text');
+      const profileTop = document.getElementById('profile-top');
+      const bottomSection = document.getElementById('bottom-section');
+      const toast = document.getElementById('toast');
+      const viewCountEl = document.getElementById('view-count');
+      const bgVideo = document.getElementById('bg-video-el');
+      const volumeControl = document.getElementById('volume-control');
+      const volumeMuteBtn = document.getElementById('volume-mute');
+      const volumeDownBtn = document.getElementById('volume-down');
+      const volumeUpBtn = document.getElementById('volume-up');
+      const volumeSlider = document.getElementById('volume-slider');
+      const iconVolumeOn = document.getElementById('icon-volume-on');
+      const iconVolumeOff = document.getElementById('icon-volume-off');
+      const profileAvatar = document.getElementById('profile-avatar');
+      const profileUsername = document.getElementById('profile-username');
+      const profileBio = document.getElementById('profile-bio');
+      const discordCardAvatar = document.getElementById('discord-card-avatar');
+      const discordCardDot = document.getElementById('discord-card-dot');
+      const discordStatusText = document.getElementById('discord-status-text');
+      const discordStatusSub = document.getElementById('discord-status-sub');
+      const welcomeMsg = document.getElementById('welcome-msg');
+      const recentActivity = document.getElementById('recent-activity');
+      const activityList = document.getElementById('activity-list');
+      const rainCanvas = document.getElementById('rain-canvas');
+
+      let entered = false;
+      let welcomeTimer = null;
+      let isMuted = false;
+      let lastVolume = CONFIG.defaultVolume;
+      let lastPresenceData = null;
+
+      // ── Rain effect ──
+      function initRain() {
+        if (!rainCanvas) return;
+        var ctx = rainCanvas.getContext('2d');
+        var drops = [];
+        var w, h;
+
+        function resize() {
+          w = rainCanvas.width = window.innerWidth;
+          h = rainCanvas.height = window.innerHeight;
+        }
+
+        function createDrop() {
+          return {
+            x: Math.random() * w,
+            y: Math.random() * h - h,
+            len: Math.random() * 18 + 10,
+            speed: Math.random() * 5 + 8,
+            opacity: Math.random() * 0.25 + 0.08,
+            width: Math.random() * 1.2 + 0.4,
+          };
+        }
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        for (var i = 0; i < 180; i++) drops.push(createDrop());
+
+        function draw() {
+          ctx.clearRect(0, 0, w, h);
+          drops.forEach(function (d) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(174, 194, 224, ' + d.opacity + ')';
+            ctx.lineWidth = d.width;
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x + d.width * 0.5, d.y + d.len);
+            ctx.stroke();
+            d.y += d.speed;
+            d.x += 0.5;
+            if (d.y > h) {
+              d.y = -d.len;
+              d.x = Math.random() * w;
+            }
+          });
+          requestAnimationFrame(draw);
+        }
+        draw();
+      }
+
+      // ── View counter ──
+      function initViewCount() {
+        if (!localStorage.getItem('viewsMigrated5314')) {
+          localStorage.setItem('profileViews', String(CONFIG.profileViews));
+          localStorage.setItem('viewsMigrated5314', '1');
+        } else if (!localStorage.getItem('profileViews')) {
+          localStorage.setItem('profileViews', String(CONFIG.profileViews));
+        }
+      }
+
+      function getViewCount() {
+        var stored = localStorage.getItem('profileViews');
+        if (stored === null) return CONFIG.profileViews;
+        return parseInt(stored, 10) || CONFIG.profileViews;
+      }
+
+      function incrementViewCount() {
+        if (sessionStorage.getItem('viewCounted')) return getViewCount();
+        var views = getViewCount() + 1;
+        localStorage.setItem('profileViews', String(views));
+        sessionStorage.setItem('viewCounted', '1');
+        return views;
+      }
+
+      function displayViewCount(count) {
+        if (viewCountEl) {
+          viewCountEl.textContent = count.toLocaleString();
+        }
+      }
+
+      // ── Welcome message ──
+      function showWelcome() {
+        if (!welcomeMsg) return;
+        welcomeMsg.classList.remove('hide');
+        welcomeMsg.classList.add('show');
+        clearTimeout(welcomeTimer);
+        welcomeTimer = setTimeout(function () {
+          welcomeMsg.classList.add('hide');
+          welcomeMsg.classList.remove('show');
+        }, 3200);
+      }
+
+      // ── Recent activity ──
+      function updateRecentActivity(data) {
+        if (!activityList) return;
+        var items = [];
+        var activity = formatActivity(data);
+        var status = data.discord_status || 'offline';
+
+        if (activity) items.push(activity);
+        if (data.listening_to_spotify && data.spotify) {
+          items.push('🎵 ' + data.spotify.song);
+        }
+        items.push(STATUS_LABELS[status] || 'Offline');
+
+        if (items.length === 0) items.push('No recent activity');
+
+        activityList.innerHTML = items.slice(0, 4).map(function (text) {
+          return '<li class="activity-item rounded-lg px-2 py-1.5 text-xs sm:text-sm text-white/50 font-light truncate">' + text + '</li>';
+        }).join('');
+      }
+
+      function showToast(message) {
+        if (message && welcomeMsg) {
+          var span = welcomeMsg.querySelector('span');
+          if (span) span.textContent = message;
+          showWelcome();
+          setTimeout(function () {
+            if (span) span.textContent = 'Welcome';
+          }, 3200);
+        } else {
+          showWelcome();
+        }
+      }
+
+      function setStatusDot(el, status) {
+        if (!el) return;
+        el.classList.remove('status-online', 'status-idle', 'status-dnd', 'status-offline');
+        el.classList.add('status-' + (status || 'offline'));
+      }
+
+      function updateVolumeUI() {
+        if (!bgVideo || !volumeSlider) return;
+        var vol = bgVideo.muted ? 0 : bgVideo.volume;
+        var pct = Math.round(vol * 100);
+        volumeSlider.value = pct;
+        volumeSlider.style.setProperty('--vol-percent', pct + '%');
+        var muted = bgVideo.muted || vol === 0;
+        iconVolumeOn.classList.toggle('hidden', muted);
+        iconVolumeOff.classList.toggle('hidden', !muted);
+      }
+
+      function setVolume(value) {
+        if (!bgVideo) return;
+        var vol = Math.max(0, Math.min(1, value));
+        bgVideo.volume = vol;
+        lastVolume = vol > 0 ? vol : lastVolume;
+        if (vol > 0) {
+          bgVideo.muted = false;
+          isMuted = false;
+        }
+        localStorage.setItem('bgVolume', String(vol));
+        updateVolumeUI();
+      }
+
+      function smoothVolumeChange(delta) {
+        if (!bgVideo) return;
+        var target = Math.max(0, Math.min(1, (bgVideo.muted ? 0 : bgVideo.volume) + delta));
+        var start = bgVideo.muted ? 0 : bgVideo.volume;
+        var steps = 8;
+        var step = 0;
+        bgVideo.muted = false;
+        function animate() {
+          step++;
+          var progress = step / steps;
+          var eased = 1 - Math.pow(1 - progress, 3);
+          var current = start + (target - start) * eased;
+          bgVideo.volume = current;
+          updateVolumeUI();
+          if (step < steps) requestAnimationFrame(animate);
+          else setVolume(target);
+        }
+        animate();
+      }
+
+      function toggleMute() {
+        if (!bgVideo) return;
+        if (bgVideo.muted || bgVideo.volume === 0) {
+          bgVideo.muted = false;
+          isMuted = false;
+          setVolume(lastVolume > 0 ? lastVolume : CONFIG.defaultVolume);
+        } else {
+          lastVolume = bgVideo.volume;
+          bgVideo.muted = true;
+          isMuted = true;
+          updateVolumeUI();
+        }
+      }
+
+      function getDiscordAvatarUrl(user) {
+        if (!user || !user.id) return null;
+        if (user.avatar) {
+          return 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png?size=256';
+        }
+        var index = Number(user.discriminator) % 5 || 0;
+        return 'https://cdn.discordapp.com/embed/avatars/' + index + '.png';
+      }
+
+      function formatActivity(data) {
+        if (data.listening_to_spotify && data.spotify) {
+          return 'Listening to ' + data.spotify.song + ' — ' + data.spotify.artist;
+        }
+        var activities = data.activities || [];
+        var custom = activities.find(function (a) { return a.type === 4; });
+        if (custom && custom.state) return custom.state;
+        var game = activities.find(function (a) { return a.type === 0; });
+        if (game) return 'Playing ' + game.name;
+        return '';
+      }
+
+      function getStatusSub(data) {
+        var activity = formatActivity(data);
+        if (activity) return activity;
+        var status = data.discord_status || 'offline';
+        return STATUS_LABELS[status] || 'last seen recently';
+      }
+
+      function applyDiscordPresence(data) {
+        var user = data.discord_user;
+        var status = data.discord_status || 'offline';
+        var username = user.username;
+
+        setStatusDot(discordCardDot, status);
+
+        var avatarUrl = getDiscordAvatarUrl(user);
+        if (avatarUrl) {
+          if (profileAvatar) profileAvatar.src = avatarUrl;
+          if (discordCardAvatar) discordCardAvatar.src = avatarUrl;
+        }
+
+        if (profileUsername) profileUsername.textContent = username;
+        if (discordStatusText) discordStatusText.textContent = username;
+        if (discordStatusSub) discordStatusSub.textContent = getStatusSub(data);
+        lastPresenceData = data;
+        updateRecentActivity(data);
+      }
+
+      function showDiscordNotFound() {
+        setStatusDot(discordCardDot, 'offline');
+        if (discordStatusText) discordStatusText.textContent = CONFIG.username;
+        if (discordStatusSub) discordStatusSub.textContent = 'User not found';
+        if (activityList) {
+          activityList.innerHTML = '<li class="activity-item rounded-lg px-2 py-1.5 text-xs sm:text-sm text-white/45 font-light">No activity found</li>';
+        }
+      }
+
+      async function fetchDiscordPresence() {
+        if (!CONFIG.discordUserId) {
+          showDiscordNotFound();
+          discordStatusText.textContent = 'Set discordUserId in CONFIG';
+          return;
+        }
+
+        try {
+          var res = await fetch('https://api.lanyard.rest/v1/users/' + CONFIG.discordUserId);
+          var json = await res.json();
+          if (json.success && json.data) {
+            applyDiscordPresence(json.data);
+          } else {
+            showDiscordNotFound();
+          }
+        } catch (err) {
+          showDiscordNotFound();
+          discordStatusText.textContent = 'Could not load Discord status';
+        }
+      }
+
+      function enterSite() {
+        if (entered) return;
+        entered = true;
+
+        enterOverlay.classList.add('hidden-overlay');
+        if (profileTop) profileTop.classList.add('visible');
+        if (bottomSection) bottomSection.classList.add('visible');
+        if (recentActivity) recentActivity.classList.add('visible');
+
+        var views = incrementViewCount();
+        displayViewCount(views);
+
+        // Unmute & play background video with audio (requires user click)
+        if (bgVideo) {
+          var savedVol = parseFloat(localStorage.getItem('bgVolume') || String(CONFIG.defaultVolume));
+          bgVideo.volume = savedVol;
+          lastVolume = savedVol;
+          bgVideo.muted = false;
+          isMuted = false;
+          volumeSlider.value = Math.round(savedVol * 100);
+          updateVolumeUI();
+          bgVideo.play().catch(function () {
+            showToast('Tap again to enable audio');
+          });
+        }
+
+        if (volumeControl) {
+          volumeControl.classList.remove('hidden-until-enter');
+          volumeControl.classList.add('visible-control');
+        }
+
+        fetchDiscordPresence();
+        showWelcome();
+      }
+
+      // ── Init ──
+      window.addEventListener('load', function () {
+        initViewCount();
+        initRain();
+
+        if (bgVideo) {
+          bgVideo.play().catch(function () {});
+        }
+
+        setTimeout(function () {
+          loader.classList.add('hidden');
+        }, 800);
+
+        if (profileUsername) profileUsername.textContent = CONFIG.username;
+        if (profileBio) profileBio.textContent = CONFIG.bio;
+
+        displayViewCount(getViewCount());
+      });
+
+      // Volume controls
+      volumeMuteBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleMute();
+      });
+
+      volumeDownBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        smoothVolumeChange(-0.08);
+      });
+
+      volumeUpBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        smoothVolumeChange(0.08);
+      });
+
+      volumeSlider.addEventListener('input', function (e) {
+        e.stopPropagation();
+        setVolume(parseInt(volumeSlider.value, 10) / 100);
+      });
+
+      volumeControl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        volumeControl.classList.toggle('expanded');
+      });
+
+      // Refresh Discord status every 30 seconds
+      setInterval(function () {
+        if (entered && CONFIG.discordUserId) fetchDiscordPresence();
+      }, 30000);
+
+      // Enter interaction
+      enterOverlay.addEventListener('click', enterSite);
+      enterText.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          enterSite();
+        }
+      });
+      enterText.setAttribute('tabindex', '0');
+      enterText.setAttribute('role', 'button');
+
+      // Keyboard shortcut: any key to enter
+      document.addEventListener('keydown', function (e) {
+        if (!entered && e.key !== 'Tab') {
+          enterSite();
+        }
+      });
+
+      // Parallax subtle effect on mouse move (desktop only)
+      if (window.matchMedia('(pointer: fine)').matches) {
+        document.addEventListener('mousemove', function (e) {
+          if (!entered) return;
+          var x = (e.clientX / window.innerWidth - 0.5) * 6;
+          var y = (e.clientY / window.innerHeight - 0.5) * 6;
+          if (profileTop) profileTop.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
