@@ -524,10 +524,11 @@
   </div>
 
   <!-- Background video -->
-  <div id="bg-video">
-    <video id="bg-video-el" autoplay muted loop playsinline preload="auto">
+  <div id="bg-video" class="fixed inset-0 z-0 overflow-hidden">
+    <video id="bg-video-el" autoplay loop playsinline preload="auto" class="absolute inset-0 h-full w-full object-cover">
       <source src="assets/bg-video.mp4" type="video/mp4" />
     </video>
+    <div class="absolute inset-0 bg-black/45"></div>
   </div>
   <div class="bg-overlay"></div>
 
@@ -582,7 +583,7 @@
       <div class="avatar-ring w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden mx-auto mb-4 sm:mb-5">
         <img
           id="profile-avatar"
-          src="https://cdn.discordapp.com/embed/avatars/0.png"
+          src="assets/profile-avatar.png"
           alt="Profile avatar"
           class="w-full h-full object-cover"
           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%231a1a2e%22 width=%22100%22 height=%22100%22/%3E%3Ccircle cx=%2250%22 cy=%2238%22 r=%2218%22 fill=%22%23333%22/%3E%3Cellipse cx=%2250%22 cy=%2285%22 rx=%2230%22 ry=%2222%22 fill=%22%23333%22/%3E%3C/svg%3E'"
@@ -600,6 +601,21 @@
       <p id="profile-bio" class="text-sm sm:text-base text-white/70 font-light tracking-wide">
         For Nothing But Amusement
       </p>
+
+      <a
+        href="https://www.instagram.com/hamza_dogar_43?igsh=MXR6MGwwa3JxcDdvbA=="
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Instagram"
+        class="mt-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/25 backdrop-blur-md text-white/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400/40 hover:text-purple-300 hover:shadow-lg hover:shadow-purple-500/20"
+        title="Instagram"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="5" ry="5"></rect>
+          <circle cx="12" cy="12" r="4"></circle>
+          <circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </a>
 
     </div>
   </main>
@@ -628,7 +644,7 @@
         <div class="relative shrink-0">
           <img
             id="discord-card-avatar"
-            src="https://cdn.discordapp.com/embed/avatars/0.png"
+            src="assets/profile-avatar.png"
             alt="Discord avatar"
             class="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover"
           />
@@ -910,10 +926,23 @@
       function getDiscordAvatarUrl(user) {
         if (!user || !user.id) return null;
         if (user.avatar) {
-          return 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png?size=256';
+          var avatar = user.avatar;
+          var ext = avatar.indexOf('a_') === 0 ? 'gif' : 'png';
+          return 'https://cdn.discordapp.com/avatars/' + user.id + '/' + avatar + '.' + ext + '?size=256';
         }
-        var index = Number(user.discriminator) % 5 || 0;
+        var index = Math.abs(Number(user.discriminator || 0) % 5) || 0;
         return 'https://cdn.discordapp.com/embed/avatars/' + index + '.png';
+      }
+
+      function setAvatarImage(imgEl, user) {
+        if (!imgEl) return;
+        var avatarUrl = getDiscordAvatarUrl(user);
+        if (!avatarUrl) return;
+        imgEl.src = 'assets/profile-avatar.png';
+        imgEl.onerror = function () {
+          imgEl.onerror = null;
+          imgEl.src = 'assets/profile-avatar.png';
+        };
       }
 
       function formatActivity(data) {
@@ -942,11 +971,8 @@
 
         setStatusDot(discordCardDot, status);
 
-        var avatarUrl = getDiscordAvatarUrl(user);
-        if (avatarUrl) {
-          if (profileAvatar) profileAvatar.src = avatarUrl;
-          if (discordCardAvatar) discordCardAvatar.src = avatarUrl;
-        }
+        setAvatarImage(profileAvatar, user);
+        setAvatarImage(discordCardAvatar, user);
 
         if (profileUsername) profileUsername.textContent = username;
         if (discordStatusText) discordStatusText.textContent = username;
@@ -1003,12 +1029,20 @@
           bgVideo.volume = savedVol;
           lastVolume = savedVol;
           bgVideo.muted = false;
+          bgVideo.defaultMuted = false;
           isMuted = false;
           volumeSlider.value = Math.round(savedVol * 100);
           updateVolumeUI();
-          bgVideo.play().catch(function () {
-            showToast('Tap again to enable audio');
-          });
+          var attemptVideoPlay = function () {
+            bgVideo.muted = false;
+            bgVideo.volume = savedVol;
+            bgVideo.play().catch(function () {
+              showToast('Tap again to enable audio');
+            });
+          };
+          attemptVideoPlay();
+          document.addEventListener('click', attemptVideoPlay, { once: true });
+          document.addEventListener('keydown', attemptVideoPlay, { once: true });
         }
 
         if (volumeControl) {
@@ -1026,8 +1060,21 @@
         initRain();
 
         if (bgVideo) {
-          bgVideo.play().catch(function () {});
+          bgVideo.removeAttribute('muted');
+          bgVideo.muted = false;
+          bgVideo.defaultMuted = false;
+          bgVideo.volume = Math.max(0, Math.min(1, parseFloat(localStorage.getItem('bgVolume') || String(CONFIG.defaultVolume))));
+          var tryPlay = function () {
+            bgVideo.muted = false;
+            bgVideo.defaultMuted = false;
+            bgVideo.play().catch(function () {});
+          };
+          tryPlay();
+          document.addEventListener('click', tryPlay, { once: true });
+          document.addEventListener('keydown', tryPlay, { once: true });
         }
+
+        fetchDiscordPresence();
 
         setTimeout(function () {
           loader.classList.add('hidden');
